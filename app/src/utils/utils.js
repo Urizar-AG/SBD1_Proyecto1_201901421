@@ -1,18 +1,20 @@
 import { readFileSync } from 'fs'
 import { parse } from 'csv-parse/sync'
 
-export const readFile = function (path) {
-    const fileContent = readFileSync(path, 'utf-8')
-    const csvContent = parse(fileContent)
-    csvContent.shift()
-    return csvContent
+export const leerArchivo = function (ruta) {
+    const contenido = readFileSync(ruta, 'utf-8')
+    const csv = parse(contenido, {
+        trim: true,
+    })
+    csv.shift()
+    return csv
 }
 
-export const dateFormat = function (date) {
-    return date.split('/').reverse().join('-')
+export const formatoFecha = function (fecha) {
+    return fecha.split('/').reverse().join('-')
 }
 
-export const dateTimeFormat = function (dateTime) {
-    const [date, time] = dateTime.split(' ')
-    return [dateFormat(date), time.padStart(5, '0')].join(' ').concat(':00')
+export const formatoFechaHora = function (fechaHora) {
+    const [fecha, hora] = fechaHora.split(' ')
+    return [formatoFecha(fecha), hora.padStart(5, '0')].join(' ').concat(':00')
 }

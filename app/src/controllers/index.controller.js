@@ -24,6 +24,21 @@ export const cargarTablaTemporal = async (req, res) => {
     res.status(200).json({Mensaje:'Carga de datos realizada con éxito', Tablas: tables})
 }
 
+//Elimina las tablas temporales
+export const eliminarTablaTemporal = async (req, res) => {
+    
+    await pool.query('DROP TABLE IF EXISTS TMP_CANDIDATO')
+    await pool.query('DROP TABLE IF EXISTS TMP_CARGO')
+    await pool.query('DROP TABLE IF EXISTS TMP_CIUDADANO')
+    await pool.query('DROP TABLE IF EXISTS TMP_DEPARTAMENTO')
+    await pool.query('DROP TABLE IF EXISTS TMP_MESA')
+    await pool.query('DROP TABLE IF EXISTS TMP_PARTIDO')
+    await pool.query('DROP TABLE IF EXISTS TMP_VOTACION')
+
+    const [tables] = await pool.query('SHOW TABLES FROM elecciones_generales')
+    res.status(200).json({Mensaje: 'Tablas temporales eliminadas correctamente', Tablas: tables})
+}
+
 async function candidatos() {
     const datos = leerArchivo('./src/data/candidatos.csv').map(([id, nombreCompleto, fechaNacimiento, idPartido, idCargo]) => 
         ([parseInt(id), nombreCompleto, formatoFecha(fechaNacimiento), parseInt(idPartido), parseInt(idCargo)])

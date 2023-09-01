@@ -1,5 +1,5 @@
 import { Router } from "express"
-import { index, cargarTablaTemporal, eliminarTablaTemporal, crearModelo, cargarModelo, test} from "../controllers/index.controller.js"
+import { index, cargarTablaTemporal, eliminarTablaTemporal, crearModelo, cargarModelo, eliminarModelo, test} from "../controllers/index.controller.js"
 
 const router = Router()
 
@@ -9,5 +9,6 @@ router.get('/cargartabtemp', cargarTablaTemporal)
 router.get('/eliminartabtemp', eliminarTablaTemporal)
 router.get('/crearmodelo', crearModelo)
 router.get('/cargarmodelo', cargarModelo)
-//router.get('/eliminarmodelo', eliminarModelo)
+router.get('/eliminarModelo', eliminarModelo)
+
 export default router

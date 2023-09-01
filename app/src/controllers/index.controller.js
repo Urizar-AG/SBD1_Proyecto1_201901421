@@ -150,6 +150,20 @@ export const cargarModelo = async (req, res) => {
     res.status(200).json({Mensaje: 'Carga de datos al modelo realizada con éxito'})
 }
 
+export const eliminarModelo = async (req, res) => {
+    await pool.query('DROP TABLE IF EXISTS DETALLE_VOTO')
+    await pool.query('DROP TABLE IF EXISTS VOTO')
+    await pool.query('DROP TABLE IF EXISTS CANDIDATO')
+    await pool.query('DROP TABLE IF EXISTS MESA')
+    await pool.query('DROP TABLE IF EXISTS CARGO')
+    await pool.query('DROP TABLE IF EXISTS PARTIDO')
+    await pool.query('DROP TABLE IF EXISTS DEPARTAMENTO')
+    await pool.query('DROP TABLE IF EXISTS CIUDADANO')
+
+    const [tables] = await pool.query('SHOW TABLES FROM elecciones_generales')
+    res.status(200).json({Mensaje: 'Modelo de datos eliminado correctamente', Tablas: tables})
+}
+
 async function candidatos() {
     const datos = leerArchivo('./src/data/candidatos.csv').map(([id, nombreCompleto, fechaNacimiento, idPartido, idCargo]) => 
         ([parseInt(id), nombreCompleto, formatoFecha(fechaNacimiento), parseInt(idPartido), parseInt(idCargo)])

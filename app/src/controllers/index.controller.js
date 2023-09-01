@@ -129,6 +129,27 @@ export const crearModelo = async (req, res) => {
     res.status(200).json({Mensaje: 'Modelo de datos creado con éxito', Tablas: tables})
 }
 
+//Carga los datos de las tablas temporales al modelo
+export const cargarModelo = async (req, res) => {
+    await pool.query('INSERT INTO CIUDADANO SELECT * FROM TMP_CIUDADANO')
+    
+    await pool.query('INSERT INTO DEPARTAMENTO(nombre) SELECT nombre FROM TMP_DEPARTAMENTO')
+    
+    await pool.query('INSERT INTO PARTIDO SELECT * FROM TMP_PARTIDO')
+
+    await pool.query('INSERT INTO CARGO SELECT * FROM TMP_CARGO')
+
+    await pool.query('INSERT INTO MESA(id_departamento) SELECT id_departamento FROM TMP_MESA')
+
+    await pool.query('INSERT INTO CANDIDATO SELECT * FROM TMP_CANDIDATO')
+
+    await pool.query('INSERT INTO VOTO(dpi, id_mesa, fecha_hora) SELECT DISTINCT dpi_ciudadano, id_mesa, fecha_hora FROM TMP_VOTACION')
+    
+    await pool.query('INSERT INTO DETALLE_VOTO(id_voto, id_candidato) SELECT id_voto, id_candidato FROM TMP_VOTACION')
+
+    res.status(200).json({Mensaje: 'Carga de datos al modelo realizada con éxito'})
+}
+
 async function candidatos() {
     const datos = leerArchivo('./src/data/candidatos.csv').map(([id, nombreCompleto, fechaNacimiento, idPartido, idCargo]) => 
         ([parseInt(id), nombreCompleto, formatoFecha(fechaNacimiento), parseInt(idPartido), parseInt(idCargo)])

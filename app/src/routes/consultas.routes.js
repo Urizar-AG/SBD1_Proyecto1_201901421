@@ -1,8 +1,8 @@
 import { Router } from "express"
-import { consulta } from "../controllers/consultas.controller.js"
+import { consulta1 } from "../controllers/consultas.controller.js"
 
 const router = Router()
 
-router.get('/consulta', consulta)
+router.get('/consulta1', consulta1)
 
 export default router

@@ -30,7 +30,9 @@ export const cargarTablaTemporal = async (req, res) => {
 
 //Crea las tablas del modelo
 export const crearModelo = async (req, res) => {
-    await pool.query(
+    const conexion = await pool.getConnection()
+
+    await conexion.query(
         `CREATE TABLE IF NOT EXISTS CIUDADANO(
             dpi VARCHAR(13) NOT NULL,
             nombre VARCHAR(25) NOT NULL,
@@ -43,7 +45,7 @@ export const crearModelo = async (req, res) => {
         )`
     )
 
-    await pool.query(
+    await conexion.query(
         `CREATE TABLE IF NOT EXISTS DEPARTAMENTO(
             id_departamento INT NOT NULL AUTO_INCREMENT,
             nombre VARCHAR(25) NOT NULL,
@@ -51,7 +53,7 @@ export const crearModelo = async (req, res) => {
         )`
     )
 
-    await pool.query(
+    await conexion.query(
         `CREATE TABLE IF NOT EXISTS PARTIDO(
             id_partido INT NOT NULL,
             nombre VARCHAR(50) NOT NULL,
@@ -61,7 +63,7 @@ export const crearModelo = async (req, res) => {
         )`
     )
 
-    await pool.query(
+    await conexion.query(
         `CREATE TABLE IF NOT EXISTS CARGO(
             id_cargo INT NOT NULL,
             cargo VARCHAR(50) NOT NULL,
@@ -69,7 +71,7 @@ export const crearModelo = async (req, res) => {
         )`
     )
 
-    await pool.query(
+    await conexion.query(
         `CREATE TABLE IF NOT EXISTS MESA(
             id_mesa INT NOT NULL AUTO_INCREMENT,
             id_departamento INT NOT NULL,
@@ -78,7 +80,7 @@ export const crearModelo = async (req, res) => {
         )`
     )
 
-    await pool.query(
+    await conexion.query(
         `CREATE TABLE IF NOT EXISTS CANDIDATO(
             id_candidato INT NOT NULL,
             nombre_completo VARCHAR(50) NOT NULL,
@@ -91,7 +93,7 @@ export const crearModelo = async (req, res) => {
         )`
     )
 
-    await pool.query(
+    await conexion.query(
         `CREATE TABLE IF NOT EXISTS VOTO(
             id_voto INT NOT NULL AUTO_INCREMENT,
             dpi VARCHAR(13) NOT NULL,
@@ -103,7 +105,7 @@ export const crearModelo = async (req, res) => {
         )`
     )
 
-    await pool.query(
+    await conexion.query(
         `CREATE TABLE IF NOT EXISTS DETALLE_VOTO(
             id_detalle INT NOT NULL AUTO_INCREMENT,
             id_voto INT NOT NULL,
@@ -114,21 +116,24 @@ export const crearModelo = async (req, res) => {
         )`
     )
     
-    const [tables] = await pool.query('SHOW TABLES FROM elecciones_generales')
+    const [tables] = await conexion.query('SHOW TABLES FROM elecciones_generales')
+    conexion.release()
     res.status(200).json({Mensaje: 'Modelo de datos creado con éxito', Tablas: tables})
 }
 
 export const eliminarModelo = async (req, res) => {
-    await pool.query('DROP TABLE IF EXISTS DETALLE_VOTO')
-    await pool.query('DROP TABLE IF EXISTS VOTO')
-    await pool.query('DROP TABLE IF EXISTS CANDIDATO')
-    await pool.query('DROP TABLE IF EXISTS MESA')
-    await pool.query('DROP TABLE IF EXISTS CARGO')
-    await pool.query('DROP TABLE IF EXISTS PARTIDO')
-    await pool.query('DROP TABLE IF EXISTS DEPARTAMENTO')
-    await pool.query('DROP TABLE IF EXISTS CIUDADANO')
-
-    const [tables] = await pool.query('SHOW TABLES FROM elecciones_generales')
+    const conexion = await pool.getConnection()
+    await conexion.query('DROP TABLE IF EXISTS DETALLE_VOTO')
+    await conexion.query('DROP TABLE IF EXISTS VOTO')
+    await conexion.query('DROP TABLE IF EXISTS CANDIDATO')
+    await conexion.query('DROP TABLE IF EXISTS MESA')
+    await conexion.query('DROP TABLE IF EXISTS CARGO')
+    await conexion.query('DROP TABLE IF EXISTS PARTIDO')
+    await conexion.query('DROP TABLE IF EXISTS DEPARTAMENTO')
+    await conexion.query('DROP TABLE IF EXISTS CIUDADANO')
+    const [tables] = await conexion.query('SHOW TABLES FROM elecciones_generales')
+    
+    conexion.release()
     res.status(200).json({Mensaje: 'Modelo de datos eliminado correctamente', Tablas: tables})
 }
 

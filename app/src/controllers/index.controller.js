@@ -10,33 +10,22 @@ export const test = async (req, res) => {
     res.status(200).json({Mensaje: result[0].resultado})
 }
 
-//Carga la información de los archivos csv en tablas temporales
+//Carga la información de los archivos csv en tablas
 export const cargarTablaTemporal = async (req, res) => {
-   
-    await candidatos()
-    await cargos()
-    await ciudadanos()
-    await departamentos()
-    await mesas()
-    await partidos()
-    await votaciones()        
-    const[tables] = await pool.query('SHOW TABLES FROM elecciones_generales')
+    const conexion = await pool.getConnection()
+    //tablas temporales
+    await candidatos(conexion)
+    await cargos(conexion)
+    await ciudadanos(conexion)
+    await departamentos(conexion)
+    await mesas(conexion)
+    await partidos(conexion)
+    await votaciones(conexion) 
+    //carga de información de las tablas temporales al modelo
+    await cargarModelo(conexion)       
+    const[tables] = await conexion.query('SHOW TABLES FROM elecciones_generales')
+    conexion.release()
     res.status(200).json({Mensaje:'Carga de datos realizada con éxito', Tablas: tables})
-}
-
-//Elimina las tablas temporales
-export const eliminarTablaTemporal = async (req, res) => {
-    
-    await pool.query('DROP TABLE IF EXISTS TMP_CANDIDATO')
-    await pool.query('DROP TABLE IF EXISTS TMP_CARGO')
-    await pool.query('DROP TABLE IF EXISTS TMP_CIUDADANO')
-    await pool.query('DROP TABLE IF EXISTS TMP_DEPARTAMENTO')
-    await pool.query('DROP TABLE IF EXISTS TMP_MESA')
-    await pool.query('DROP TABLE IF EXISTS TMP_PARTIDO')
-    await pool.query('DROP TABLE IF EXISTS TMP_VOTACION')
-
-    const [tables] = await pool.query('SHOW TABLES FROM elecciones_generales')
-    res.status(200).json({Mensaje: 'Tablas temporales eliminadas correctamente', Tablas: tables})
 }
 
 //Crea las tablas del modelo
@@ -129,27 +118,6 @@ export const crearModelo = async (req, res) => {
     res.status(200).json({Mensaje: 'Modelo de datos creado con éxito', Tablas: tables})
 }
 
-//Carga los datos de las tablas temporales al modelo
-export const cargarModelo = async (req, res) => {
-    await pool.query('INSERT INTO CIUDADANO SELECT * FROM TMP_CIUDADANO')
-    
-    await pool.query('INSERT INTO DEPARTAMENTO(nombre) SELECT nombre FROM TMP_DEPARTAMENTO')
-    
-    await pool.query('INSERT INTO PARTIDO SELECT * FROM TMP_PARTIDO')
-
-    await pool.query('INSERT INTO CARGO SELECT * FROM TMP_CARGO')
-
-    await pool.query('INSERT INTO MESA(id_departamento) SELECT id_departamento FROM TMP_MESA')
-
-    await pool.query('INSERT INTO CANDIDATO SELECT * FROM TMP_CANDIDATO')
-
-    await pool.query('INSERT INTO VOTO(dpi, id_mesa, fecha_hora) SELECT DISTINCT dpi_ciudadano, id_mesa, fecha_hora FROM TMP_VOTACION')
-    
-    await pool.query('INSERT INTO DETALLE_VOTO(id_voto, id_candidato) SELECT id_voto, id_candidato FROM TMP_VOTACION')
-
-    res.status(200).json({Mensaje: 'Carga de datos al modelo realizada con éxito'})
-}
-
 export const eliminarModelo = async (req, res) => {
     await pool.query('DROP TABLE IF EXISTS DETALLE_VOTO')
     await pool.query('DROP TABLE IF EXISTS VOTO')
@@ -164,12 +132,31 @@ export const eliminarModelo = async (req, res) => {
     res.status(200).json({Mensaje: 'Modelo de datos eliminado correctamente', Tablas: tables})
 }
 
-async function candidatos() {
+//Carga los datos de las tablas temporales al modelo
+async function cargarModelo(conexion){
+    await conexion.query('INSERT INTO CIUDADANO SELECT * FROM TMP_CIUDADANO')
+    
+    await conexion.query('INSERT INTO DEPARTAMENTO(nombre) SELECT nombre FROM TMP_DEPARTAMENTO')
+    
+    await conexion.query('INSERT INTO PARTIDO SELECT * FROM TMP_PARTIDO')
+
+    await conexion.query('INSERT INTO CARGO SELECT * FROM TMP_CARGO')
+
+    await conexion.query('INSERT INTO MESA(id_departamento) SELECT id_departamento FROM TMP_MESA')
+
+    await conexion.query('INSERT INTO CANDIDATO SELECT * FROM TMP_CANDIDATO')
+
+    await conexion.query('INSERT INTO VOTO(dpi, id_mesa, fecha_hora) SELECT DISTINCT dpi_ciudadano, id_mesa, fecha_hora FROM TMP_VOTACION')
+    
+    await conexion.query('INSERT INTO DETALLE_VOTO(id_voto, id_candidato) SELECT id_voto, id_candidato FROM TMP_VOTACION')
+}
+
+async function candidatos(conexion) {
     const datos = leerArchivo('./src/data/candidatos.csv').map(([id, nombreCompleto, fechaNacimiento, idPartido, idCargo]) => 
         ([parseInt(id), nombreCompleto, formatoFecha(fechaNacimiento), parseInt(idPartido), parseInt(idCargo)])
     )
-    await pool.query(
-        `CREATE TABLE IF NOT EXISTS TMP_CANDIDATO(
+    await conexion.query(
+        `CREATE TEMPORARY TABLE TMP_CANDIDATO(
             id_candidato INT NOT NULL,
             nombre_completo VARCHAR(50) NOT NULL,
             fecha_nacimiento DATE NOT NULL,
@@ -179,29 +166,29 @@ async function candidatos() {
         )`
     )
 
-    await pool.query('INSERT INTO TMP_CANDIDATO VALUES ?', [datos])
+    await conexion.query('INSERT INTO TMP_CANDIDATO VALUES ?', [datos])
 }
 
-async function cargos() {
+async function cargos(conexion) {
     const datos = leerArchivo('./src/data/cargos.csv').map(([idCargo, cargo]) => 
         ([parseInt(idCargo), cargo])
     )
-    await pool.query(
-        `CREATE TABLE IF NOT EXISTS TMP_CARGO(
+    await conexion.query(
+        `CREATE TEMPORARY TABLE TMP_CARGO(
             id_cargo INT NOT NULL,
             cargo VARCHAR(50) NOT NULL,
             PRIMARY KEY(id_cargo)
         )`
     )
-    await pool.query('INSERT INTO TMP_CARGO VALUES ?', [datos])
+    await conexion.query('INSERT INTO TMP_CARGO VALUES ?', [datos])
 }
 
-async function ciudadanos() {
+async function ciudadanos(conexion) {
     const datos = leerArchivo('./src/data/ciudadanos.csv').map(([dpi, nombre, apellido, direccion, telefono, edad, genero]) =>
         ([dpi, nombre, apellido, direccion, telefono, parseInt(edad), genero])
     )
-    await pool.query(
-        `CREATE TABLE IF NOT EXISTS TMP_CIUDADANO(
+    await conexion.query(
+        `CREATE TEMPORARY TABLE TMP_CIUDADANO(
             dpi VARCHAR(13) NOT NULL,
             nombre VARCHAR(25) NOT NULL,
             apellido VARCHAR(25) NOT NULL,
@@ -212,44 +199,44 @@ async function ciudadanos() {
             PRIMARY KEY(dpi)
         )`
     )
-    await pool.query('INSERT INTO TMP_CIUDADANO VALUES ?', [datos])
+    await conexion.query('INSERT INTO TMP_CIUDADANO VALUES ?', [datos])
 }
 
-async function departamentos() {
+async function departamentos(conexion) {
     const datos = leerArchivo('./src/data/departamentos.csv').map(([idDepartamento, nombre]) =>
         ([
             parseInt(idDepartamento), 
             nombre
         ])
     )
-    await pool.query(
-        `CREATE TABLE IF NOT EXISTS TMP_DEPARTAMENTO(
+    await conexion.query(
+        `CREATE TEMPORARY TABLE TMP_DEPARTAMENTO(
             id_departamento INT NOT NULL,
             nombre VARCHAR(25) NOT NULL,
             PRIMARY KEY(id_departamento)
         )`
     )
-    await pool.query('INSERT INTO TMP_DEPARTAMENTO VALUES ?', [datos])
+    await conexion.query('INSERT INTO TMP_DEPARTAMENTO VALUES ?', [datos])
 }
 
-async function mesas() {
+async function mesas(conexion) {
     const datos = leerArchivo('./src/data/mesas.csv').map(([idMesa, idDepartamento]) => 
         ([
             parseInt(idMesa), 
             parseInt(idDepartamento)
         ])
     )
-    await pool.query(
-        `CREATE TABLE IF NOT EXISTS TMP_MESA(
+    await conexion.query(
+        `CREATE TEMPORARY TABLE TMP_MESA(
             id_mesa INT NOT NULL,
             id_departamento INT NOT NULL,
             PRIMARY KEY(id_mesa)
         )`
     )
-    await pool.query('INSERT INTO TMP_MESA VALUES ?', [datos])
+    await conexion.query('INSERT INTO TMP_MESA VALUES ?', [datos])
 }
 
-async function partidos() {
+async function partidos(conexion) {
     const datos = leerArchivo('./src/data/partidos.csv').map(([idPartido, nombre, siglas, fechaFundacion]) => 
         ([
             parseInt(idPartido), 
@@ -258,8 +245,8 @@ async function partidos() {
             formatoFecha(fechaFundacion)
         ])
     )
-    await pool.query(
-        `CREATE TABLE IF NOT EXISTS TMP_PARTIDO(
+    await conexion.query(
+        `CREATE TEMPORARY TABLE TMP_PARTIDO(
             id_partido INT NOT NULL,
             nombre VARCHAR(50) NOT NULL,
             siglas VARCHAR(10) NOT NULL,
@@ -267,10 +254,10 @@ async function partidos() {
             PRIMARY KEY(id_partido)
         )`
     )   
-    await pool.query('INSERT INTO TMP_PARTIDO VALUES ?', [datos])
+    await conexion.query('INSERT INTO TMP_PARTIDO VALUES ?', [datos])
 }
 
-async function votaciones() {
+async function votaciones(conexion) {
     const datos = leerArchivo('./src/data/votaciones.csv').map(([idVoto, idCandidato, dpiCiudadano, idMesa, fechaHora]) =>
         [
             parseInt(idVoto), 
@@ -280,8 +267,8 @@ async function votaciones() {
             formatoFechaHora(fechaHora)
         ]
     )
-    await pool.query(
-        `CREATE TABLE IF NOT EXISTS TMP_VOTACION(
+    await conexion.query(
+        `CREATE TEMPORARY TABLE TMP_VOTACION(
             id_votacion INT NOT NULL AUTO_INCREMENT,
             id_voto INT NOT NULL,
             id_candidato INT NOT NULL,
@@ -291,5 +278,5 @@ async function votaciones() {
             PRIMARY KEY(id_votacion)
         )`
     )
-    await pool.query('INSERT INTO TMP_VOTACION(id_voto, id_candidato, dpi_ciudadano, id_mesa, fecha_hora) VALUES ?', [datos])
+    await conexion.query('INSERT INTO TMP_VOTACION(id_voto, id_candidato, dpi_ciudadano, id_mesa, fecha_hora) VALUES ?', [datos])
 }

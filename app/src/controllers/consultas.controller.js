@@ -51,3 +51,27 @@ export const consulta4 = async(req, res) => {
     )
     res.status(200).json({Mensaje: 'Consulta 4 realizada con éxito', Registros: result})
 }
+
+export const consulta6 = async(req, res) => {
+    const [result] = await pool.query(
+        `SELECT COUNT(id_candidato) AS "Votos Nulos"
+        FROM DETALLE_VOTO
+        WHERE id_candidato = -1;
+        `
+    )
+    res.status(200).json({Mensaje: 'Consulta 6 realizada con éxito', Registros: result})
+}
+
+export const consulta7 = async(req, res) => {
+    const [result] = await pool.query(
+        `SELECT 
+            edad AS Edad,
+            COUNT(edad) AS Votantes
+        FROM CIUDADANO
+        GROUP BY edad
+        ORDER BY Votantes DESC
+        LIMIT 10;
+        `
+    )
+    res.status(200).json({Mensaje: 'Consulta 7 realizada con éxito', Registros: result})
+}

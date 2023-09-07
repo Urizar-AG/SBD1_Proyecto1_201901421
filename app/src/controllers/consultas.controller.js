@@ -36,3 +36,18 @@ export const consulta3 = async(req, res) => {
     )
     res.status(200).json({Mensaje: 'Consulta 3 realizada con éxito', Registros: result})
 }
+
+export const consulta4 = async(req, res) => {
+    const [result] = await pool.query(
+        `SELECT 
+            nombre AS Partido,
+            COUNT(id_cargo) AS "Total Candidatos"
+        FROM PARTIDO
+        INNER JOIN CANDIDATO
+        ON CANDIDATO.id_partido = PARTIDO.id_partido
+        WHERE PARTIDO.id_partido > -1
+        GROUP BY Partido;
+        `
+    )
+    res.status(200).json({Mensaje: 'Consulta 4 realizada con éxito', Registros: result})
+}

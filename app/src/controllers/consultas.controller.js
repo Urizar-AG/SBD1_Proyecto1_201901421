@@ -109,3 +109,17 @@ export const consulta9 = async(req, res) => {
     )
     res.status(200).json({Mensaje: 'Consulta 9 realizada con éxito', Registros: result})
 }
+
+export const consulta10 = async(req, res) => {
+    const [result] = await pool.query(
+        `SELECT 
+            TIME_FORMAT(TIME(fecha_hora), '%H:%i') AS Hora,
+            COUNT(fecha_hora) AS Votantes
+        FROM VOTO
+        GROUP BY fecha_hora
+        ORDER BY Votantes DESC
+        LIMIT 5;
+        `
+    )
+    res.status(200).json({Mensaje: 'Consulta 10 realizada con éxito', Registros: result})
+}

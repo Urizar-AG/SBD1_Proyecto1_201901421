@@ -75,3 +75,37 @@ export const consulta7 = async(req, res) => {
     )
     res.status(200).json({Mensaje: 'Consulta 7 realizada con éxito', Registros: result})
 }
+
+export const consulta8 = async(req, res) => {
+    const [result] = await pool.query(
+        `SELECT 
+            nombre_completo AS Presidente,
+            (SELECT nombre_completo FROM CANDIDATO C WHERE CANDIDATO.id_partido = C.id_partido AND C.id_cargo = 2) AS Vicepresidente,
+            COUNT(DETALLE_VOTO.id_candidato) AS Votos
+        FROM DETALLE_VOTO
+        INNER JOIN CANDIDATO
+        ON CANDIDATO.id_candidato = DETALLE_VOTO.id_candidato
+        WHERE CANDIDATO.id_cargo = 1
+        GROUP BY DETALLE_VOTO.id_candidato
+        ORDER BY Votos DESC
+        LIMIT 10;
+        `
+    )
+    res.status(200).json({Mensaje: 'Consulta 8 realizada con éxito', Registros: result})
+}
+
+export const consulta9 = async(req, res) => {
+    const [result] = await pool.query(
+        `SELECT 
+            id_mesa AS "No.Mesa", 
+            nombre AS Departamento,
+            (SELECT COUNT(id_mesa) FROM VOTO WHERE MESA.id_mesa = id_mesa) AS Votantes
+        FROM MESA
+        INNER JOIN DEPARTAMENTO 
+        ON DEPARTAMENTO.id_departamento = MESA.id_departamento
+        ORDER BY Votantes DESC
+        LIMIT 5;
+        `
+    )
+    res.status(200).json({Mensaje: 'Consulta 9 realizada con éxito', Registros: result})
+}

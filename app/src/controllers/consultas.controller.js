@@ -52,6 +52,20 @@ export const consulta4 = async(req, res) => {
     res.status(200).json({Mensaje: 'Consulta 4 realizada con éxito', Registros: result})
 }
 
+export const consulta5 = async(req, res) => {
+    const [result] = await pool.query(
+        `SELECT 
+            nombre AS Departamento,
+            CAST(SUM((SELECT COUNT(id_mesa) FROM VOTO WHERE MESA.id_mesa = id_mesa)) AS UNSIGNED) AS Votos
+        FROM MESA
+        INNER JOIN DEPARTAMENTO 
+        ON DEPARTAMENTO.id_departamento = MESA.id_departamento
+        GROUP BY nombre;
+        `
+    )
+    res.status(200).json({Mensaje: 'Consulta 5 realizada con éxito', Registros: result})
+}
+
 export const consulta6 = async(req, res) => {
     const [result] = await pool.query(
         `SELECT COUNT(id_candidato) AS "Votos Nulos"
@@ -122,4 +136,18 @@ export const consulta10 = async(req, res) => {
         `
     )
     res.status(200).json({Mensaje: 'Consulta 10 realizada con éxito', Registros: result})
+}
+
+export const consulta11 = async (req, res) => {
+    const[result] = await pool.query(
+        `SELECT 
+            genero AS Genero,
+            COUNT(id_voto) AS "Cantidad Votantes"
+        FROM VOTO
+        INNER JOIN CIUDADANO
+        ON CIUDADANO.dpi = VOTO.dpi
+        GROUP BY genero;
+        `
+    )
+    res.status(200).json({Mensaje: 'Consulta 11 realizada con éxito', Registros: result})
 }

@@ -13,128 +13,162 @@ export const test = async (req, res) => {
 //Carga la información de los archivos csv en tablas
 export const cargarTablaTemporal = async (req, res) => {
     const conexion = await pool.getConnection()
-    //tablas temporales
-    await candidatos(conexion)
-    await cargos(conexion)
-    await ciudadanos(conexion)
-    await departamentos(conexion)
-    await mesas(conexion)
-    await partidos(conexion)
-    await votaciones(conexion) 
-    //carga de información de las tablas temporales al modelo
-    await cargarModelo(conexion)       
-    const[tables] = await conexion.query('SHOW TABLES FROM elecciones_generales')
-    conexion.release()
-    res.status(200).json({Mensaje:'Carga de datos realizada con éxito', Tablas: tables})
+    try {
+        //tablas temporales
+        await candidatos(conexion)
+        await cargos(conexion)
+        await ciudadanos(conexion)
+        await departamentos(conexion)
+        await mesas(conexion)
+        await partidos(conexion)
+        await votaciones(conexion) 
+        //carga de información de las tablas temporales al modelo
+        await cargarModelo(conexion)       
+        const[tables] = await conexion.query('SHOW TABLES FROM elecciones_generales')
+        res.status(200).json({Mensaje:'Carga de datos realizada con éxito', Tablas: tables})
+    } catch (error) {
+        console.log('===============================================');
+        console.log(error);
+        console.log('===============================================');
+        res.status(500).json({Mensaje:'Algo ha salido mal'})
+    } finally {
+        await eliminarTemporales(conexion)
+        conexion.release()
+    }
 }
 
 //Crea las tablas del modelo
 export const crearModelo = async (req, res) => {
     const conexion = await pool.getConnection()
-
-    await conexion.query(
-        `CREATE TABLE IF NOT EXISTS CIUDADANO(
-            dpi VARCHAR(13) NOT NULL,
-            nombre VARCHAR(25) NOT NULL,
-            apellido VARCHAR(25) NOT NULL,
-            direccion VARCHAR(50) NOT NULL,
-            telefono VARCHAR(10) NOT NULL,
-            edad INT NOT NULL,
-            genero CHAR(1) NOT NULL,
-            PRIMARY KEY(dpi)
-        )`
-    )
-
-    await conexion.query(
-        `CREATE TABLE IF NOT EXISTS DEPARTAMENTO(
-            id_departamento INT NOT NULL AUTO_INCREMENT,
-            nombre VARCHAR(25) NOT NULL,
-            PRIMARY KEY(id_departamento)
-        )`
-    )
-
-    await conexion.query(
-        `CREATE TABLE IF NOT EXISTS PARTIDO(
-            id_partido INT NOT NULL,
-            nombre VARCHAR(50) NOT NULL,
-            siglas VARCHAR(10) NOT NULL,
-            fecha_fundacion DATE NOT NULL,
-            PRIMARY KEY(id_partido)
-        )`
-    )
-
-    await conexion.query(
-        `CREATE TABLE IF NOT EXISTS CARGO(
-            id_cargo INT NOT NULL,
-            cargo VARCHAR(50) NOT NULL,
-            PRIMARY KEY(id_cargo)
-        )`
-    )
-
-    await conexion.query(
-        `CREATE TABLE IF NOT EXISTS MESA(
-            id_mesa INT NOT NULL AUTO_INCREMENT,
-            id_departamento INT NOT NULL,
-            PRIMARY KEY(id_mesa),
-            FOREIGN KEY(id_departamento) REFERENCES DEPARTAMENTO(id_departamento)
-        )`
-    )
-
-    await conexion.query(
-        `CREATE TABLE IF NOT EXISTS CANDIDATO(
-            id_candidato INT NOT NULL,
-            nombre_completo VARCHAR(50) NOT NULL,
-            fecha_nacimiento DATE NOT NULL,
-            id_partido INT NOT NULL,
-            id_cargo INT NOT NULL,
-            PRIMARY KEY(id_candidato),
-            FOREIGN KEY(id_partido) REFERENCES PARTIDO(id_partido),
-            FOREIGN KEY(id_cargo) REFERENCES CARGO(id_cargo)
-        )`
-    )
-
-    await conexion.query(
-        `CREATE TABLE IF NOT EXISTS VOTO(
-            id_voto INT NOT NULL AUTO_INCREMENT,
-            dpi VARCHAR(13) NOT NULL,
-            id_mesa INT NOT NULL,
-            fecha_hora DATETIME NOT NULL,
-            PRIMARY KEY(id_voto),
-            FOREIGN KEY(dpi) REFERENCES CIUDADANO(dpi),
-            FOREIGN KEY(id_mesa) REFERENCES MESA(id_mesa)
-        )`
-    )
-
-    await conexion.query(
-        `CREATE TABLE IF NOT EXISTS DETALLE_VOTO(
-            id_detalle INT NOT NULL AUTO_INCREMENT,
-            id_voto INT NOT NULL,
-            id_candidato INT NOT NULL,
-            PRIMARY KEY(id_detalle),
-            FOREIGN KEY(id_voto) REFERENCES VOTO(id_voto),
-            FOREIGN KEY(id_candidato) REFERENCES CANDIDATO(id_candidato)
-        )`
-    )
+    try {
+        await conexion.query(
+            `CREATE TABLE IF NOT EXISTS CIUDADANO(
+                dpi VARCHAR(13) NOT NULL,
+                nombre VARCHAR(25) NOT NULL,
+                apellido VARCHAR(25) NOT NULL,
+                direccion VARCHAR(50) NOT NULL,
+                telefono VARCHAR(10) NOT NULL,
+                edad INT NOT NULL,
+                genero CHAR(1) NOT NULL,
+                PRIMARY KEY(dpi)
+            )`
+        )
     
-    const [tables] = await conexion.query('SHOW TABLES FROM elecciones_generales')
-    conexion.release()
-    res.status(200).json({Mensaje: 'Modelo de datos creado con éxito', Tablas: tables})
+        await conexion.query(
+            `CREATE TABLE IF NOT EXISTS DEPARTAMENTO(
+                id_departamento INT NOT NULL AUTO_INCREMENT,
+                nombre VARCHAR(25) NOT NULL,
+                PRIMARY KEY(id_departamento)
+            )`
+        )
+    
+        await conexion.query(
+            `CREATE TABLE IF NOT EXISTS PARTIDO(
+                id_partido INT NOT NULL,
+                nombre VARCHAR(50) NOT NULL,
+                siglas VARCHAR(10) NOT NULL,
+                fecha_fundacion DATE NOT NULL,
+                PRIMARY KEY(id_partido)
+            )`
+        )
+    
+        await conexion.query(
+            `CREATE TABLE IF NOT EXISTS CARGO(
+                id_cargo INT NOT NULL,
+                cargo VARCHAR(50) NOT NULL,
+                PRIMARY KEY(id_cargo)
+            )`
+        )
+    
+        await conexion.query(
+            `CREATE TABLE IF NOT EXISTS MESA(
+                id_mesa INT NOT NULL AUTO_INCREMENT,
+                id_departamento INT NOT NULL,
+                PRIMARY KEY(id_mesa),
+                FOREIGN KEY(id_departamento) REFERENCES DEPARTAMENTO(id_departamento)
+            )`
+        )
+    
+        await conexion.query(
+            `CREATE TABLE IF NOT EXISTS CANDIDATO(
+                id_candidato INT NOT NULL,
+                nombre_completo VARCHAR(50) NOT NULL,
+                fecha_nacimiento DATE NOT NULL,
+                id_partido INT NOT NULL,
+                id_cargo INT NOT NULL,
+                PRIMARY KEY(id_candidato),
+                FOREIGN KEY(id_partido) REFERENCES PARTIDO(id_partido),
+                FOREIGN KEY(id_cargo) REFERENCES CARGO(id_cargo)
+            )`
+        )
+    
+        await conexion.query(
+            `CREATE TABLE IF NOT EXISTS VOTO(
+                id_voto INT NOT NULL AUTO_INCREMENT,
+                dpi VARCHAR(13) NOT NULL,
+                id_mesa INT NOT NULL,
+                fecha_hora DATETIME NOT NULL,
+                PRIMARY KEY(id_voto),
+                FOREIGN KEY(dpi) REFERENCES CIUDADANO(dpi),
+                FOREIGN KEY(id_mesa) REFERENCES MESA(id_mesa)
+            )`
+        )
+    
+        await conexion.query(
+            `CREATE TABLE IF NOT EXISTS DETALLE_VOTO(
+                id_detalle INT NOT NULL AUTO_INCREMENT,
+                id_voto INT NOT NULL,
+                id_candidato INT NOT NULL,
+                PRIMARY KEY(id_detalle),
+                FOREIGN KEY(id_voto) REFERENCES VOTO(id_voto),
+                FOREIGN KEY(id_candidato) REFERENCES CANDIDATO(id_candidato)
+            )`
+        )
+        
+        const [tables] = await conexion.query('SHOW TABLES FROM elecciones_generales')
+        res.status(200).json({Mensaje: 'Modelo de datos creado con éxito', Tablas: tables})
+    } catch (error) {
+        console.log('===============================================');
+        console.log(error);
+        console.log('===============================================');
+        res.status(500).json({Mensaje:'Algo ha salido mal'})
+    } finally {
+        conexion.release()
+    }
 }
 
 export const eliminarModelo = async (req, res) => {
     const conexion = await pool.getConnection()
-    await conexion.query('DROP TABLE IF EXISTS DETALLE_VOTO')
-    await conexion.query('DROP TABLE IF EXISTS VOTO')
-    await conexion.query('DROP TABLE IF EXISTS CANDIDATO')
-    await conexion.query('DROP TABLE IF EXISTS MESA')
-    await conexion.query('DROP TABLE IF EXISTS CARGO')
-    await conexion.query('DROP TABLE IF EXISTS PARTIDO')
-    await conexion.query('DROP TABLE IF EXISTS DEPARTAMENTO')
-    await conexion.query('DROP TABLE IF EXISTS CIUDADANO')
-    const [tables] = await conexion.query('SHOW TABLES FROM elecciones_generales')
-    
-    conexion.release()
-    res.status(200).json({Mensaje: 'Modelo de datos eliminado correctamente', Tablas: tables})
+    try {
+        await conexion.query('DROP TABLE IF EXISTS DETALLE_VOTO')
+        await conexion.query('DROP TABLE IF EXISTS VOTO')
+        await conexion.query('DROP TABLE IF EXISTS CANDIDATO')
+        await conexion.query('DROP TABLE IF EXISTS MESA')
+        await conexion.query('DROP TABLE IF EXISTS CARGO')
+        await conexion.query('DROP TABLE IF EXISTS PARTIDO')
+        await conexion.query('DROP TABLE IF EXISTS DEPARTAMENTO')
+        await conexion.query('DROP TABLE IF EXISTS CIUDADANO')
+        const [tables] = await conexion.query('SHOW TABLES FROM elecciones_generales')
+        res.status(200).json({Mensaje: 'Modelo de datos eliminado correctamente', Tablas: tables})   
+    } catch (error) {
+        console.log('===============================================');
+        console.log(error);
+        console.log('===============================================');
+        res.status(500).json({Mensaje:'Algo ha salido mal'})
+    } finally {
+        conexion.release()
+    }
+
+}
+
+async function eliminarTemporales(conexion){
+    await conexion.query('DROP TABLE IF EXISTS TMP_CANDIDATO')
+    await conexion.query('DROP TABLE IF EXISTS TMP_CARGO')
+    await conexion.query('DROP TABLE IF EXISTS TMP_CIUDADANO')
+    await conexion.query('DROP TABLE IF EXISTS TMP_DEPARTAMENTO')
+    await conexion.query('DROP TABLE IF EXISTS TMP_MESA')
+    await conexion.query('DROP TABLE IF EXISTS TMP_PARTIDO')
+    await conexion.query('DROP TABLE IF EXISTS TMP_VOTACION')
 }
 
 //Carga los datos de las tablas temporales al modelo

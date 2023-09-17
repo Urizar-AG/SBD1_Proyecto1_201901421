@@ -105,7 +105,7 @@ export const consulta5 = async(req, res) => {
 export const consulta6 = async(req, res) => {
     try {
         const [result] = await pool.query(
-            `SELECT COUNT(id_candidato) AS "Votos Nulos"
+            `SELECT COUNT(DISTINCT id_voto) AS "Votos Nulos"
             FROM DETALLE_VOTO
             WHERE id_candidato = -1;
             `

@@ -47,9 +47,9 @@ El Tribunal Supremo Electoral (TSE) tiene la responsabilidad crucial de recopila
 ---  
 
 ### **CONSULTAS SQL**  
-* Todas las sentencias DML y DLL están el archivo database.sql
+* Todas las sentencias DDL y DML están el archivo database.sql
 
-* Las consultas no son leídas directamente por la API desde este archivo, este únicamente es el script SQL.  
+* Las consultas no son leídas directamente por la API desde ese archivo, este únicamente es el script SQL.  
   
 ---  
 ### **MODELO DE BASE DE DATOS** ###  
@@ -133,22 +133,22 @@ El Tribunal Supremo Electoral (TSE) tiene la responsabilidad crucial de recopila
 <details><summary> Relaciones </summary>  
 
 * Un ciudadano puede emitir uno o muchos votos    
-  Cada voto debe registrar uno y solamente un ciudadano  
+  Cada voto debe ser emitido por uno y solamente un ciudadano  
 
 * Un voto debe registrar uno o más detalles de votación   
   Cada detalle de votación debe estar asociado a un voto  
 
-* Cada voto debe ser registrado en una mesa  
+* Cada voto debe ser emitido en una mesa  
   Una mesa puede registrar uno o muchos votos  
 
-* Cada mesa debe pertenecer a uno y solament un departamento   
+* Cada mesa debe pertenecer a uno y solamente un departamento   
   Cada departamento debe poseer una o muchas mesas  
 
 * Cada detalle de votación debe asociar un candidato    
   Un candidato puede asociarse con uno o muchos detalles de voto  
 
 * Cada candidato debe de postularse a un cargo  
-  Cada cargo de tener uno o muchos candidatos  
+  Cada cargo debe tener uno o muchos candidatos  
 
 * Cada candidato debe de pertenecer a uno y solamente un partido  
   Un partido debe tener uno o más candidatos postulados
